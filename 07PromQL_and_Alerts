@@ -58,3 +58,15 @@ spec:
         summary: "Prediction count is zero"
         description: "No prediction requests have been processed."
         description: "More than 5 prediction failures occurred in the last 5 minutes."
+
+
+Alert-1 Analysis:
+      Prometheus asks:
+
+"Has this counter increased during the last 5 minutes?"
+
+If no increase occurred, the expression becomes true.
+
+Then Prometheus waits another 2 minutes (for: 2m).
+
+If it is still true after those 2 minutes, the alert becomes FIRING.
