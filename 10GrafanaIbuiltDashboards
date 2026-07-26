@@ -1,0 +1,20 @@
+Built-in Dashboards
+
+Import Kubernetes dashboards instead of building everything manually.
+
+Go to:
+
+Dashboards
+↓
+
+Import
+
+| Dashboard                     |    ID |
+| ----------------------------- | ----: |
+| Kubernetes Cluster Monitoring |   315 |
+| Node Exporter Full            |  1860 |
+| Kubernetes Pods               |  6417 |
+| Kubernetes Views              | 15757 |
+
+
+After entering an ID, select your Prometheus data source and import.
