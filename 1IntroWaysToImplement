@@ -1,0 +1,61 @@
+Option 1: Application Server (EC2/VM)
+
+Example:
+
+Java Spring Boot App
+Tomcat/JBoss
+Docker Compose or standalone Docker
+
+Pros:
+Easier to understand each component.
+Less Kubernetes complexity.
+Good for learning Prometheus scraping, Grafana dashboards, ELK, and Jaeger basics.
+
+Cons:
+Not how most production cloud-native applications are monitored.
+Manual configuration.
+Doesn't teach Kubernetes monitoring.
+
+
+
+Option 2: Kubernetes (Helm)
+
+Example:
+
+Application
+      │
+      ▼
+ Kubernetes
+      │
+ ├── Prometheus
+ ├── Grafana
+ ├── Alertmanager
+ ├── Headlamp
+ ├── EFK
+ ├── Jaeger
+ └── Node Exporter
+
+Everything is installed using Helm.
+
+Pros:
+✔ Production standard
+✔ Easier upgrades
+
+helm upgrade
+helm rollback
+helm uninstall
+
+✔ Industry practice
+EKS
+AKS
+GKE
+OpenShift
+
+almost every Kubernetes platform uses Helm.
+
+
+
+Metrics:        Prometheus + Grafana + Alertmanager 
+Dashboard:      Headlamp
+Logs:           EFK, ELK
+Traces:         Jaeger
