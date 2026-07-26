@@ -1,0 +1,91 @@
+What are Grafana Alerts?
+
+Grafana Alerting allows you to create alerts from:
+
+Prometheus metrics
+Loki logs
+Elasticsearch
+InfluxDB
+MySQL/Postgres
+CloudWatch
+Azure Monitor
+Many other data sources
+
+Unlike Prometheus alerts, Grafana can combine multiple data sources into one alert.
+
+
+
+Architecture:
+
+                Prometheus
+                     |
+             Stores Metrics
+                     |
+              +--------------+
+              |   Grafana    |
+              |--------------|
+              | Dashboards   |
+              | Alert Rules  |
+              | Contact Pts  |
+              | Notification |
+              +--------------+
+                     |
+             Email / Slack / Teams
+
+Grafana Alerting Components
+
+There are four main components.
+
+1. Alert Rule
+
+Defines WHEN an alert should fire.
+
+Example:
+
+CPU > 80%
+
+or
+
+prediction_requests_total == 0
+
+
+2. Contact Point
+
+Defines WHERE to send notifications.
+
+Examples:
+
+Email
+Slack
+Microsoft Teams
+Telegram
+PagerDuty
+Discord
+
+
+3. Notification Policy
+
+Defines WHICH alerts go to WHICH contact point.
+
+Example
+
+Critical
+        |
+        v
+     Email + Slack
+
+Warning
+        |
+        v
+       Email
+
+4. Silences
+
+Temporarily suppress alerts.
+
+Example
+
+Sunday Maintenance
+
+No alerts
+2 PM - 4 PM
