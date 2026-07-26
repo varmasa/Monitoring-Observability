@@ -1,0 +1,69 @@
+Does kube-prometheus-stack scrape Java application metrics?
+
+By default: No.
+
+It automatically scrapes Kubernetes components, but your Java application is not scraped unless you expose metrics and tell Prometheus to scrape it.
+
+By default, it scrapes:
+✅ Kubernetes API Server
+✅ kubelet
+✅ kube-state-metrics
+✅ Node Exporter (CPU, Memory, Disk)
+✅ CoreDNS
+✅ etcd (if configured)
+✅ Scheduler
+✅ Controller Manager
+
+For example:
+
+Minikube
+│
+├── Node Exporter        ✅
+├── kube-state-metrics   ✅
+├── kubelet              ✅
+├── API Server           ✅
+└── Your Java App        ❌ (Not by default)
+How does Prometheus scrape a Java application?
+
+Your application must expose a metrics endpoint.
+
+For example, with Spring Boot:
+
+http://myapp:8080/actuator/prometheus
+
+Then you create a ServiceMonitor (or PodMonitor) so Prometheus knows to scrape it.
+
+Flow:
+
+Java App
+     │
+     ▼
+/actuator/prometheus
+     │
+     ▼
+Service
+     │
+     ▼
+ServiceMonitor
+     │
+     ▼
+Prometheus
+
+If you're using JBoss/Tomcat without Spring Boot, you can use the JMX Prometheus Exporter to expose JVM metrics.
+
+
+s1:   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+s2:   helm repo update
+s3:   kubectl create namespace monitoring
+s4:   helm install monitoring prometheus-community/kube-prometheus-stack --namespace monitoring
+s5:   kubectl get pods -n monitoring
+      kubectl get svc -n monitoring
+
+    o/p: pods running
+        alertmanager-monitoring-kube-prometheus-alertmanager
+        monitoring-grafana
+        monitoring-kube-prometheus-operator
+        monitoring-kube-state-metrics
+        monitoring-prometheus-node-exporter
+
+s6:   kubectl port-forward svc/monitoring-kube-prometheus-prometheus   9090:9090   -n monitoring --address 0.0.0.0
