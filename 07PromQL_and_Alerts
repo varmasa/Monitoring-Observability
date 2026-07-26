@@ -1,0 +1,60 @@
+Prometheus -> Query -> Graph
+
+Queries:
+
+prediction_requests_total
+rate(prediction_requests_total[5m])
+increase(prediction_requests_total[1h])
+process_cpu_seconds_total
+process_resident_memory_bytes
+up
+sum(rate(container_cpu_usage_seconds_total[5m]))
+
+Note: Understanding PromQL is essential for creating dashboards and alerts.
+
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: prediction-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+  - name: logapp.rules
+
+    rules:
+
+    - alert: NoFileUploads
+      expr: increase(prediction_requests_total[5m]) == 0
+      for: 2m
+
+      labels:
+        severity: warning
+
+      annotations:
+        summary: "No log uploads"
+        description: "No log files uploaded during the last 5 minutes."
+
+    - alert: TooManyFailures
+      expr: increase(prediction_errors_total[5m]) > 5
+      for: 1m
+
+      labels:
+        severity: critical
+
+      annotations:
+        summary: "Too many prediction failures"
+
+    - alert: PredictionRequestsZero
+      expr: prediction_requests_total == 0
+      for: 30s
+  
+      labels:
+        severity: warning
+  
+      annotations:
+        summary: "Prediction count is zero"
+        description: "No prediction requests have been processed."
+        description: "More than 5 prediction failures occurred in the last 5 minutes."
