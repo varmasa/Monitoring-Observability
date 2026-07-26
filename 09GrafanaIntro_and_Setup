@@ -1,0 +1,179 @@
+Grafana:  
+      Grafana is an open-source visualization and monitoring platform.
+
+It does not collect metrics itself. Instead, it connects to data sources like:
+
+Prometheus
+Loki
+Elasticsearch
+InfluxDB
+MySQL
+PostgreSQL
+AWS CloudWatch
+Azure Monitor
+
+Grafana queries those data sources and displays the results as dashboards.
+
+
+Architecture:
+                Users
+                  |
+                  |
+              HTTP Requests
+                  |
+            +--------------+
+            |   LogApp     |
+            +--------------+
+                  |
+        Exposes /metrics
+                  |
+          ServiceMonitor
+                  |
+          +---------------+
+          | Prometheus    |
+          +---------------+
+             |        |
+             |        |
+             |    Alert Rules
+             |        |
+             |   Alertmanager
+             |        |
+             |      Gmail
+             |
+             |
+       +---------------+
+       |   Grafana     |
+       +---------------+
+             |
+      Dashboards/Charts
+
+
+Prometheus stores metrics.
+Grafana visualizes them.
+
+
+Installation: Since you've installed kube-prometheus-stack, Grafana is already installed.
+
+Verify:
+
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+
+Access:  kubectl port-forward svc/monitoring-grafana \
+-n monitoring 3000:80 --address 0.0.0.0
+
+
+Default Login
+
+Username: admin
+
+Password:
+kubectl get secret monitoring-grafana \
+-n monitoring \
+-o jsonpath="{.data.admin-password}" | base64 -d
+
+Grafana UI
+
+After login you'll see
+
+Home
+Dashboards
+Explore
+Alerting
+Connections
+Administration
+
+
+Prometheus Integration:
+
+Since Grafana came with kube-prometheus-stack,
+
+Prometheus is usually already configured.
+
+Verify:
+
+Connections
+↓
+Data Sources
+↓
+Prometheus
+
+You should see
+
+Status
+
+✓ Connected
+
+If not,
+
+Add datasource
+
+Type:
+Prometheus
+
+URL
+
+http://monitoring-kube-prometheus-prometheus.monitoring:9090
+
+Save & Test
+
+Datasource is working
+
+
+
+Verify Integration:
+
+Go to
+
+Explore
+
+Datasource
+
+Prometheus
+
+Execute
+
+up
+
+You'll immediately see metrics.
+
+Try
+
+prediction_requests_total
+
+Then
+
+rate(prediction_requests_total[5m])
+
+Then
+
+prediction_failures_total
+
+
+Grafana -> DrillDown -> Metrics (You can see all metrics here)
+
+Dashboard
+
+Create
+
+Dashboard
+
+↓
+
+New Dashboard
+
+↓
+
+Add Visualization
+
+Datasource
+
+Prometheus
+
+Panel 1
+
+prediction_requests_total
+
+Title
+
+Prediction Requests
