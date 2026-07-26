@@ -67,3 +67,4 @@ s5:   kubectl get pods -n monitoring
         monitoring-prometheus-node-exporter
 
 s6:   kubectl port-forward svc/monitoring-kube-prometheus-prometheus   9090:9090   -n monitoring --address 0.0.0.0
+     Access it http://publicip:9090
