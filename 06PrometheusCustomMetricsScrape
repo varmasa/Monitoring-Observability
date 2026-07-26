@@ -1,0 +1,179 @@
+
+Exposing custom metrics from a python application
+
+s1: Install prometheus-client
+s2: Do python code changes in app.py
+        from prometheus_client import generate_latest
+        from prometheus_client import CONTENT_TYPE_LATEST
+        from flask import Response
+
+        @app.route("/metrics")
+        def metrics():
+            return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
+s3: Build docker image again & apply in k8s deployment
+s4: kubectl exec -it <pod> -n <namespace> -- sh
+    curl localhost:7008/metrics
+
+
+s5: To expose it in prometheus targets
+
+
+1. Create serviceMonitor & it selects Services using labels
+      A ServiceMonitor refers to the port name, not the port number.
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: logapp-monitor
+  namespace: monitoring
+  labels:
+    release: monitoring            //Get from kube-prometheus-stack installation cmd
+spec:
+  selector:
+    matchLabels:
+      app: ml_logapp
+
+  namespaceSelector:
+    matchNames:
+    - logapp
+
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
+
+
+2. Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: logapp-service
+  labels:
+    app: ml_logapp
+spec:
+  selector:
+    app: ml_logapp
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 7008
+  type: NodePort
+
+
+
+3. Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logapp-deployment
+  labels:
+    app: logapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ml_logapp
+  template:
+    metadata:
+      labels:
+        app: ml_logapp
+    spec:
+      containers:
+      - name: logapp-container
+        image: saivarma5557/logapp:v2
+        ports:
+        - containerPort: 7008
+
+
+
+from browser: http://<publicip>:8080/metrics 
+from prometheus: http://10.244.0.17:7008/metrics
+
+
+1. Browser access:
+You access:
+
+http://13.126.95.151:8080/metrics
+
+Flow:
+
+Your Laptop Browser
+        │
+        ▼
+AWS EC2 Public IP
+13.126.95.151
+        │
+        ▼
+NodePort (8080)
+        │
+        ▼
+Service
+        │
+        ▼
+Pod
+        │
+        ▼
+7008 (/metrics)
+
+Here:
+
+13.126.95.151 = EC2 Public IP
+8080 = NodePort
+7008 = Container port
+
+Your browser cannot directly access Pod IPs, so it goes through the Kubernetes Service.
+
+
+2. Prometheus access:
+Prometheus uses
+
+http://10.244.0.17:7008/metrics
+
+Flow:
+
+Prometheus Pod
+      │
+      ▼
+Pod IP
+10.244.0.17
+      │
+      ▼
+Container Port 7008
+
+Since Prometheus is inside the same Kubernetes cluster, it doesn't need the public IP or NodePort.
+
+It communicates directly with the Pod over the cluster network.
+
+
+ARCH:
+
+                  Internet
+
+                       │
+
+             13.126.95.151:8080
+
+                       │
+
+                NodePort Service
+
+                       │
+
+        ┌──────────────┼──────────────┐
+
+        ▼              ▼              ▼
+
+10.244.0.17      10.244.0.18      10.244.0.19
+   Pod               Pod              Pod
+    │                 │                │
+7008/metrics      7008/metrics     7008/metrics
+
+
+Your browser enters from the top.
+
+Prometheus is already inside the cluster, so it starts at the pod layer.
