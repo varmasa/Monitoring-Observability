@@ -89,3 +89,88 @@ Sunday Maintenance
 
 No alerts
 2 PM - 4 PM
+
+
+Setting up Grafana Alerting
+Step 1:
+
+Open
+
+Grafana
+
+Alerting
+
+You'll see
+
+Alert rules
+Contact points
+Notification policies
+Silences
+
+Step 2:
+Create Contact Point
+
+Alerting
+↓
+
+Contact Points
+
+↓
+
+New Contact Point
+
+Choose
+
+Email
+
+Name
+
+gmail
+
+Recipient
+
+varmarayapati2002@gmail.com
+
+Save.
+
+
+Step 3: 
+
+SMTP Configuration
+
+Grafana also needs SMTP configured (similar to Alertmanager).
+
+If using the Helm chart, update your values.yaml
+
+grafana:
+  envFromSecret: grafana-smtp
+
+  grafana.ini:
+    smtp:
+      enabled: true
+      host: smtp.gmail.com:587
+      user: varmarayapati2002@gmail.com
+      password: $__env{password}
+      from_address: varmarayapati2002@gmail.com
+      from_name: Grafana
+      skip_verify: false
+
+
+Step-4:  helm upgrade monitoring prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f values.yaml
+
+
+Step-5: kubectl rollout restart deployment monitoring-grafana -n monitoring
+
+Step-6: kubectl exec -it deploy/monitoring-grafana -n monitoring -- \
+grep -A10 "\[smtp\]" /etc/grafana/grafana.ini
+
+
+Step-7: Test
+
+Go to:
+
+Alerting → Contact points → Email → Test
+
+You should receive a test email.
