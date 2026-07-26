@@ -1,0 +1,117 @@
+What is Headlamp?
+    Headlamp is an open-source Kubernetes web UI developed by Kinvolk (now part of Microsoft).
+    It lets you manage and monitor your Kubernetes cluster through a browser instead of relying only on kubectl commands.
+
+Why do we need Headlamp?
+
+Normally, to inspect Kubernetes resources, you run commands like:
+
+kubectl get pods
+kubectl describe pod logapp-abc123
+kubectl logs logapp-abc123
+kubectl get svc
+kubectl get ingress
+kubectl top pods
+
+When managing many namespaces, deployments, and pods, this becomes tedious.
+
+Headlamp provides a single UI to:
+
+View cluster resources
+Inspect pod logs
+Check pod events
+Scale deployments
+View YAML manifests
+Monitor workloads
+Browse namespaces
+Execute commands inside containers
+
+Without:
+Developer
+     │
+     │
+kubectl commands
+     │
+     ▼
+Kubernetes API Server
+
+
+with:
+Developer
+     │
+     ▼
++----------------+
+|   Headlamp UI  |
++----------------+
+        │
+        ▼
+ Kubernetes API Server
+        │
+        ▼
+ Nodes / Pods / Services
+
+
+ Features
+
+Headlamp provides:
+
+Cluster overview
+Node information
+Namespace management
+Deployments
+ReplicaSets
+StatefulSets
+DaemonSets
+Pods
+Services
+Ingresses
+ConfigMaps
+Secrets
+PersistentVolumes
+PersistentVolumeClaims
+Jobs
+CronJobs
+Events
+Logs
+YAML editor
+Terminal into Pods
+Resource usage (if Metrics Server is installed)
+
+
+
+
+helm repo add headlamp https://kubernetes-sigs.github.io/headlamp/
+helm repo update
+
+helm install headlamp headlamp/headlamp \
+-n headlamp \
+--create-namespace
+
+
+kubectl port-forward svc/headlamp -n headlamp 8085:80 --address 0.0.0.0
+
+headlamp-admin.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: headlamp-admin
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: headlamp-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: headlamp-admin
+  namespace: kube-system
+
+
+  kubectl apply -f headlamp-admin.yaml
+  kubectl -n kube-system create token headlamp-admin
+
+  Access Headlamp
