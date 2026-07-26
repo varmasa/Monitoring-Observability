@@ -1,0 +1,29 @@
+                Users
+                  │
+                  ▼
+          Kubernetes Ingress
+                  │
+          Java Application
+                  │
+    ┌─────────────┼─────────────┐
+    │             │             │
+    ▼             ▼             ▼
+
+Prometheus     Fluent Bit     Jaeger Agent
+    │             │             │
+    ▼             ▼             ▼
+
+Grafana    Elasticsearch    Jaeger Collector
+                 │                 │
+                 ▼                 ▼
+             Kibana          Jaeger UI
+
+Alertmanager
+      │
+      ▼
+Slack / Email
+
+   Headlamp
+      │
+      ▼
+Kubernetes Dashboard
