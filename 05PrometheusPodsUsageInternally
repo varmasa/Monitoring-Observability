@@ -1,0 +1,174 @@
+Pods created by prometheus:
+
+1. Prometheus Operator
+
+Pod: monitoring-kube-prometheus-operator
+
+This is NOT Prometheus itself.
+
+Think of it as the manager.
+
+Its job is to watch Kubernetes resources like:
+
+Prometheus
+Alertmanager
+ServiceMonitor
+PodMonitor
+PrometheusRule
+
+Whenever you create one of these resources, the Operator automatically updates the Prometheus configuration.
+
+Example:
+
+Without the Operator You
+↓
+Edit prometheus.yml
+↓
+Restart Prometheus
+
+With the Operator it Create ServiceMonitor
+↓
+Operator notices it
+↓
+Updates Prometheus automatically
+↓
+No restart needed
+
+
+2. Prometheus Server
+
+Pod:
+
+prometheus-monitoring-kube-prometheus-prometheus-0
+
+This is the actual monitoring server.
+
+Responsibilities:
+
+Scrapes metrics
+Stores metrics
+Executes PromQL
+Evaluates alert rules
+Sends alerts to Alertmanager
+
+Think of it as:
+
+Brain
+
+
+3. Alertmanager
+
+Pod: alertmanager-monitoring-kube-prometheus-alertmanager-0
+
+It does not collect metrics.
+
+Instead:
+
+Prometheus
+
+↓
+
+Alertmanager
+
+↓
+
+Slack
+
+↓
+
+Email
+
+↓
+
+Teams
+
+It also:
+
+Groups duplicate alerts
+Silences alerts
+Routes alerts to different teams
+
+
+4. Grafana
+
+Pod: monitoring-grafana
+Grafana stores no metrics.
+
+Instead:
+
+Grafana
+
+↓
+
+Query Prometheus
+
+↓
+
+Display Dashboard
+
+If Prometheus stops, Grafana has nothing to show.
+
+
+5. Node Exporter
+
+Pods:monitoring-prometheus-node-exporter-xxxxx
+
+Runs as a DaemonSet.
+
+That means:
+
+One Pod
+
+Per Kubernetes Node
+
+It collects:
+
+CPU
+Memory
+Disk
+Filesystem
+Network
+Load Average
+
+Example:
+
+Linux
+
+↓
+
+Node Exporter
+
+↓
+
+Prometheus
+
+Without Node Exporter, Prometheus cannot know the node's CPU or memory usage.
+
+
+
+6. kube-state-metrics
+Pod: monitoring-kube-state-metrics
+
+This doesn't monitor CPU or memory.
+
+Instead, it talks to the Kubernetes API.
+
+It provides metrics like:
+
+Number of Pods
+Deployment replicas
+StatefulSets
+PVCs
+Jobs
+CronJobs
+DaemonSets
+
+Example:
+
+Kubernetes API
+↓
+kube-state-metrics
+↓
+Prometheus
+
+Example metric: kube_deployment_status_replicas_available
