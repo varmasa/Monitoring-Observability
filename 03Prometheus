@@ -1,0 +1,279 @@
+What is Prometheus?
+      Prometheus is an open-source monitoring and alerting system that collects, stores, and queries metrics from applications, servers, and Kubernetes clusters.
+Think of Prometheus as a database specialized for time-based metrics.
+
+ex:
+| Time  | CPU % | Memory % | Requests/sec |
+| ----- | ----- | -------- | ------------ |
+| 10:00 | 25    | 40       | 120          |
+| 10:01 | 30    | 41       | 130          |
+| 10:02 | 45    | 43       | 150          |
+
+Unlike a traditional database that stores business data (users, orders, products), Prometheus stores metrics over time.
+
+
+
+Why do we need Prometheus?
+      Imagine your application suddenly becomes slow.
+
+Without Prometheus, you might only know:
+      "The application is slow."
+
+You don't know:
+
+CPU usage
+Memory usage
+Disk usage
+Network traffic
+Number of requests
+Error rate
+JVM heap usage
+Which pod is unhealthy
+
+Prometheus collects all this information continuously.
+
+
+
+What is a Metric?
+        A metric is a numerical measurement of something.
+
+Examples:
+
+CPU usage: CPU = 45%
+Memory usage:Memory = 2.4 GB
+HTTP requests: 150 requests/sec
+Disk usage: 80%
+JVM Threads: 42 Threads
+
+Everything Prometheus stores is a metric.
+
+
+
+Prometheus Architecture: 
+                Users
+                  │
+
+             PromQL Queries
+
+                  │
+
+              Prometheus
+           (Time Series DB)
+
+       ┌──────────┼───────────┐
+       │          │           │
+
+ Node Exporter  kube-state   Application
+                  metrics      /metrics
+
+       │          │           │
+       └──────────┼───────────┘
+
+              Kubernetes
+
+Prometheus pulls metrics from exporters and applications at regular intervals.
+
+
+Main Components:
+1. Prometheus Server
+    This is the heart of the system.
+
+Responsibilities:
+
+Scrapes metrics
+Stores metrics
+Executes queries
+Evaluates alert rules
+Sends alerts to Alertmanager
+
+Think of it as the brain.
+
+
+
+2. Exporters
+    Prometheus doesn't magically know CPU or memory usage.
+
+It needs exporters.
+
+Example:
+
+Linux Server
+
+CPU
+
+↓
+
+Node Exporter
+
+↓
+
+Prometheus
+
+Common exporters:
+
+| Exporter          | Purpose                |
+| ----------------- | ---------------------- |
+| Node Exporter     | Linux metrics          |
+| Blackbox Exporter | HTTP, TCP, ICMP checks |
+| MySQL Exporter    | MySQL metrics          |
+| Redis Exporter    | Redis metrics          |
+| JMX Exporter      | Java/JVM metrics       |
+| NGINX Exporter    | NGINX metrics          |
+
+3. Targets
+    A target is anything Prometheus scrapes.
+
+Examples:
+
+10.0.0.5:9100
+10.0.0.20:8080/metrics
+pod-abc:8080
+
+Each target exposes metrics.
+
+
+
+Pull Model:
+
+Prometheus uses a pull model.
+
+Every 15 seconds
+
+Prometheus
+
+↓
+
+GET /metrics
+
+↓
+
+Application
+
+↓
+
+Returns Metrics
+
+↓
+
+Prometheus Stores Them
+
+Unlike some monitoring systems that push metrics, Prometheus regularly requests them.
+
+
+
+Metrics Endpoint: Applications expose a /metrics endpoint.
+
+Example:
+http://app:8080/metrics
+
+Example response:
+http_requests_total 150
+
+cpu_usage 45
+
+memory_usage_bytes 2147483648
+
+jvm_threads_current 28
+
+Prometheus reads this text and stores it.
+
+
+
+Time Series Database (TSDB)
+
+Prometheus stores data as:
+
+Metric Name
+
++
+
+Timestamp
+
++
+
+Value
+
++
+
+Labels
+
+Example:
+
+Metric
+
+cpu_usage
+
+Time
+
+10:00
+
+Value
+
+40
+
+Label
+
+instance=node1
+
+A time series is:
+
+CPU
+
+40
+
+45
+
+42
+
+38
+
+44
+
+Time →
+
+Prometheus is optimized for this kind of data.
+
+
+
+Labels:
+Labels add context.
+
+Without labels:
+
+cpu_usage = 40
+
+You don't know which server.
+
+With labels:
+
+cpu_usage
+
+instance=node1
+
+namespace=production
+
+pod=frontend
+
+Now Prometheus can distinguish metrics from different sources.
+
+
+
+Scraping: Prometheus periodically collects metrics.
+
+Example configuration:
+
+scrape_interval: 15s
+
+Meaning:
+
+Every 15 seconds:
+
+Prometheus
+
+↓
+
+GET /metrics
+
+↓
+
+Store Metrics
