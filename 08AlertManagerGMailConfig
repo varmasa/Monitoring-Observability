@@ -1,0 +1,110 @@
+Step-1:
+Go to: https://myaccount.google.com/apppasswords
+
+If App Passwords are available, you'll see a page like this:
+
+Enter your Google account password again.
+Under Select app, choose Mail.
+Under Select device, choose Other (Custom name).
+Enter:
+Alertmanager
+Click Generate.
+Google will display a 16-character password, for example:
+abcd efgh ijkl mnop
+
+You'll use that password (not your Gmail password) in the Alertmanager SMTP configuration.
+
+
+Step-2:
+Values.yamal:
+alertmanager:
+  config:
+    global:
+      smtp_smarthost: 'smtp.gmail.com:587'
+      smtp_from: 'varmarayapati2002@gmail.com'
+      smtp_auth_username: 'varmarayapati2002@gmail.com'
+      smtp_auth_password: '<YOUR_GMAIL_APP_PASSWORD>'
+      smtp_require_tls: true
+
+    route:
+      receiver: email-alerts
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+
+    receivers:
+      - name: email-alerts
+        email_configs:
+          - to: 'varmarayapati2002@gmail.com'
+            send_resolved: true
+
+Step-3:
+helm upgrade monitoring prometheus-community/kube-prometheus-stack \
+  -n monitoring \
+  -f values.yaml
+
+
+Step 4: Verify Alertmanager configuration
+Open:
+
+http://13.126.95.151:9093
+
+Go to:
+
+Status
+
+You should see:
+
+Receiver:
+email-alerts
+
+
+Step-5:  Check your Gmail inbox
+
+You should receive an email similar to:
+
+Subject:
+
+[FIRING:1] PredictionRequestsZero
+
+Body:
+
+Alert:
+PredictionRequestsZero
+
+Severity:
+warning
+
+Description:
+No prediction requests have been processed.
+
+Namespace:
+logapp
+
+Pod:
+logapp-deployment-...
+
+
+
+
+In Mail subject FIRING:
+The numbers [FIRING:7] and [FIRING:4] are not alert severities or "remaining alerts." They indicate how many alerts Alertmanager grouped into a single email.
+
+From your screenshot:
+
+[FIRING:7] kube-system
+There are 7 firing alerts in the kube-system namespace.
+These are likely default Kubernetes alerts from kube-prometheus-stack (for example, Watchdog, KubeSchedulerDown, KubeProxyDown, etc.).
+[FIRING:4] logapp
+There are 4 firing alerts related to your logapp.
+Since your alert expressions are evaluated per pod, if you have multiple pods and multiple rules, Alertmanager groups them.
+
+For example, suppose you have:
+
+3 pods
+3 custom rules:
+PredictionRequestsZero
+NoFileUploads
+TooManyFailures
+
+If two rules are firing on two pods, Alertmanager may group them into one email.
