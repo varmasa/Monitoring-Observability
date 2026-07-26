@@ -257,7 +257,6 @@ pod=frontend
 Now Prometheus can distinguish metrics from different sources.
 
 
-
 Scraping: Prometheus periodically collects metrics.
 
 Example configuration:
@@ -277,3 +276,178 @@ GET /metrics
 ↓
 
 Store Metrics
+
+
+
+
+Service Discovery in Kubernetes:
+      In Kubernetes, you don't manually list every pod.
+
+Prometheus discovers them automatically.
+
+It can monitor:
+
+Pods
+Nodes
+Services
+Endpoints
+Ingresses
+
+As pods are created or deleted, Prometheus updates its target list automatically.
+
+
+
+PromQL: PromQL is Prometheus's query language.
+
+Examples:
+
+Current CPU
+
+node_cpu_seconds_total
+
+Memory
+
+node_memory_MemAvailable_bytes
+
+Request rate
+
+rate(http_requests_total[5m])
+
+Pods
+
+kube_pod_info
+
+These queries are used in both the Prometheus UI and Grafana dashboards.
+
+
+
+Storage: Prometheus stores metrics locally in its own TSDB.
+
+Prometheus
+
+↓
+
+Disk
+
+↓
+
+Time Series Database
+
+Typical retention might be 15 days, though it can be configured longer if you have sufficient storage.
+
+
+
+
+Alert Rules: Prometheus evaluates rules continuously.
+
+Example:
+
+CPU > 80%
+
+↓
+
+Fire Alert
+
+Example rule:
+
+expr: cpu_usage > 80
+for: 5m
+
+Meaning:
+
+CPU remains above 80%
+For 5 minutes
+Trigger an alert
+
+
+Alertmanager: Prometheus detects alerts, but it doesn't send emails or Slack messages directly.
+
+Prometheus
+
+↓
+
+Alertmanager
+
+↓
+
+Slack
+
+↓
+
+Email
+
+↓
+
+Microsoft Teams
+
+Alertmanager handles routing, grouping, silencing, and notification delivery.
+
+
+
+How Grafana fits in? Prometheus stores the metrics then Grafana visualizes them.
+
+Application
+
+↓
+
+Prometheus
+
+↓
+
+Grafana Dashboard
+
+Grafana queries Prometheus using PromQL and displays charts, gauges, tables, and other visualizations.
+
+
+
+Flow:
+
+Application
+↓
+/metrics
+↓
+Prometheus Scrapes Every 15 Seconds
+↓
+Stores Metrics
+↓
+Evaluates Alert Rules
+↓
+Alertmanager
+↓
+Slack / Email
+
+Grafana
+↓
+Queries Prometheus
+↓
+Displays Dashboards
+
+
+
+Monitoring in Minikube:
+
+                 Minikube
+
+        ┌───────────────────────┐
+        │                       │
+        │  Your Java Application│
+        │        /metrics        │
+        └───────────┬───────────┘
+                    │
+             HTTP scrape
+                    │
+                    ▼
+        ┌───────────────────────┐
+        │     Prometheus        │
+        │  Collects & stores    │
+        └───────────┬───────────┘
+                    │
+      ┌─────────────┴─────────────┐
+      ▼                           ▼
+ Alert Rules                  Grafana
+      │                           │
+      ▼                           ▼
+ Alertmanager             Dashboards
+      │
+      ▼
+ Slack / Email
