@@ -1,0 +1,196 @@
+Think of observability as three pillars:
+
+Metrics    → Prometheus + Grafana
+Logs       → Filebeat → Logstash → Elasticsearch → Kibana (or) FluentBit → Elasticsearch → Kibana
+Traces     → Jaeger
+
+
+Why do we need Jaeger?
+      Imagine your application is a single Java application today.
+
+A user requests:
+Login
+The application takes 1.8 seconds.
+
+Logs may show:
+User logged in
+
+Metrics may show:
+Request duration = 1.8 sec
+
+But they don't tell you why it took 1.8 seconds.
+Jaeger answers:
+
+HTTP Request
+ ├── Authentication (40 ms)
+ ├── Oracle DB Query (1200 ms)  <-- Bottleneck
+ ├── Redis Cache (20 ms)
+ └── Response (50 ms)
+
+Now you know exactly where time was spent.
+
+
+
+What is Distributed Tracing?
+      A trace represents the complete journey of one request.
+
+Example:
+
+User
+   │
+   ▼
+Frontend
+   │
+   ▼
+Java Backend
+   │
+   ├── Oracle DB
+   ├── Redis
+   └── External API
+
+Every request gets a unique ID called the Trace ID.
+
+Example:
+
+Trace ID:
+84af234b89ff2...
+
+Every component handling that request includes the same Trace ID.
+
+
+1. Trace: A complete request.
+
+Example:
+Open Homepage
+Entire lifecycle = one Trace.
+
+
+2. Span:  A single operation.
+
+Example:
+HTTP Request
+     │
+     ├── DB Query
+     ├── Cache Lookup
+     └── REST API Call
+
+Each box is one Span.
+
+  ParentSpan(HTTP Request)
+  ChildSpan(DB Query, Redis, API Call)
+
+
+  Trace Ex:
+    HTTP GET /login
+│
+├── Authentication
+│
+├── Oracle Query
+│
+├── LDAP Call
+│
+└── Response
+
+
+How it works:
+
+Java Application
+        │
+        │ Trace
+        ▼
+OpenTelemetry SDK
+        │
+        ▼
+OpenTelemetry Collector (optional)
+        │
+        ▼
+Jaeger Collector
+        │
+        ▼
+Storage
+        │
+        ▼
+Jaeger UI
+
+
+Components
+1. Agent (older architecture)
+
+Receives traces locally.
+Nowadays OpenTelemetry Collector usually replaces this.
+
+
+2. Collector
+
+Receives traces from applications.
+Processes them.
+Stores them.
+
+
+3. Query
+
+Reads traces.
+
+4. UI
+
+Browser interface.
+Searches traces.
+Shows timelines.
+
+Suppose:
+
+Customer opens:
+http://company.com/login
+
+Request enters Java.
+Java creates
+
+Trace ID
+92db88f4...
+
+Now:
+HTTP Span
+↓
+Authentication Span
+↓
+Oracle Span
+↓
+Response Span
+
+
+In Jager UI:
+    
+Trace
+
+HTTP GET /login
+
+Duration
+
+1.8 seconds
+
+
+Detailed:
+HTTP
+
+2 ms
+
+↓
+
+Authentication
+
+50 ms
+
+↓
+
+Oracle
+
+1600 ms
+
+↓
+
+Response
+
+100 ms
+
+Adv: Immediately, you can identify the slow Oracle query.
+
