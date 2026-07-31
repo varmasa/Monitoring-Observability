@@ -1,0 +1,128 @@
+logstashvalues.yaml:
+    
+replicas: 1
+image: "docker.elastic.co/logstash/logstash"
+imageTag: "8.5.1"
+
+service:
+  type: ClusterIP
+  ports:
+    - name: beats
+      port: 5044
+      protocol: TCP
+
+logstashConfig:
+  logstash.yml: |
+    http.host: 0.0.0.0
+
+logstashPipeline:
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+
+    filter {
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["https://elasticsearch-master.logging.svc.cluster.local:9200"]
+        user => "elastic"
+        password => "<ELASTIC_PASSWORD>"
+        ssl => true
+        ssl_certificate_verification => false
+        index => "filebeat-%{+YYYY.MM.dd}"
+      }
+    }
+
+
+Install it: 
+
+helm install logstash elastic/logstash \
+-n logging \
+-f logstash-values.yaml
+
+kubectl get pods -n logging    //verify logstash pods
+
+kubectl logs deployment/logstash -n logging         //Successfully started Logstash API endpoint (expected)
+
+
+Filebeat-values.yaml (To install filebeat):
+
+
+daemonset:
+  enabled: true
+
+deployment:
+  enabled: false
+
+filebeatConfig:
+  filebeat.yml: |
+    filebeat.inputs:
+    - type: container
+      enabled: true
+      paths:
+        - /var/log/containers/*.log
+
+    output.logstash:
+      hosts: ["logstash.logging.svc.cluster.local:5044"]
+
+extraVolumes:
+- name: varlogcontainers
+  hostPath:
+    path: /var/log/containers
+
+extraVolumeMounts:
+- name: varlogcontainers
+  mountPath: /var/log/containers
+  readOnly: true
+
+
+Install it:   helm install filebeat elastic/filebeat -n logging -f filebeat-values.yaml
+
+Step 5: Verify Filebeat
+
+kubectl get daemonset -n logging
+
+You should see:
+filebeat
+
+Check pods:
+kubectl get pods -n logging
+
+Then:
+kubectl logs <filebeat-pod> -n logging
+
+Expected:
+Connected to Logstash
+
+
+Step 6: Verify Logstash receives events
+kubectl logs deployment/logstash -n logging
+
+Expected:
+Beats input listener started and incoming events.
+
+
+Step 7: Verify Elasticsearch indices
+Port-forward Elasticsearch:
+kubectl port-forward svc/elasticsearch-master 9200:9200 -n logging
+
+Then:
+curl -k -u elastic:<password> \
+https://localhost:9200/_cat/indices?v
+
+You should see an index like:
+filebeat-2026.07.31
+
+
+In kibana:
+  Go to:  Stack Management → Data Views
+
+Create: filebeat-*
+
+Then navigate to: Discover
+
+You should now see logs from your Kubernetes pods.
