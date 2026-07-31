@@ -67,7 +67,7 @@ filebeatConfig:
         - /var/log/containers/*.log
 
     output.logstash:
-      hosts: ["logstash.logging.svc.cluster.local:5044"]
+      hosts: ["logstash-logstash.logging.svc.cluster.local:5044"]
 
 extraVolumes:
 - name: varlogcontainers
@@ -126,3 +126,8 @@ Create: filebeat-*
 Then navigate to: Discover
 
 You should now see logs from your Kubernetes pods.
+
+
+
+kubectl port-forward -n logging svc/logstash-logstash-headless 9600:9600  
+
