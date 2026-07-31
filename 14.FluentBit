@@ -1,0 +1,65 @@
+Fluent Bit
+  Think of Fluent Bit as a collector and forwarder.
+  It does not permanently store logs.
+
+Its job is:
+
+Read Logs
+↓
+Process Logs
+↓
+Send Logs
+
+ex:
+      Application
+          ↓
+      stdout
+          ↓
+      Fluent Bit
+          ↓
+      Elasticsearch
+
+
+Why run Fluent Bit as a DaemonSet?
+    A DaemonSet runs one pod on every Kubernetes node.
+
+Suppose your cluster has:
+Node1
+Node2
+Node3
+
+DaemonSet creates:
+  Node1
+  Fluent Bit
+
+  Node2
+  Fluent Bit
+
+  Node3
+  Fluent Bit
+
+Each Fluent Bit instance collects logs only from its node.
+
+
+What Fluent Bit Actually Does
+    It continuously:
+
+    Read new logs
+        ↓
+    Parse
+        ↓
+    Add Kubernetes Metadata
+        ↓
+    Forward
+
+Example input: INFO Login Successful
+
+After enrichment:
+{
+  "message":"INFO Login Successful",
+  "namespace":"default",
+  "pod":"java-app-7d7fc",
+  "container":"java-app",
+  "node":"minikube"
+}
+This extra metadata makes searching much easier.
