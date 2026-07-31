@@ -1,0 +1,132 @@
+Kibana: Kibana is the user interface.
+
+Without Kibana:
+
+curl Elasticsearch API
+
+With Kibana:
+
+Search logs
+Build dashboards
+Filter by namespace
+Filter by pod
+Filter by container
+Create visualizations
+Explore logs interactively
+
+
+Flow:
+
+Java App
+
+↓
+
+stdout
+
+↓
+
+Container Runtime
+
+↓
+
+Node Log Files
+
+↓
+
+Fluent Bit
+
+↓
+
+Elasticsearch
+
+↓
+
+Kibana
+
+
+
+
+Real Kubernetes Example
+
+Your deployment:
+    javawebapp
+    Replica = 3
+
+Pods:
+    javawebapp-abc
+    javawebapp-def
+    javawebapp-ghi
+
+Each pod produces:
+
+User Login
+Payment Success
+Product Created
+
+Fluent Bit collects from all three pods.
+Elasticsearch stores all logs.
+
+Kibana lets you search:
+ namespace=default
+ pod=javawebapp-abc
+ level=ERROR
+
+
+Kubernetes Metadata:
+    One of Fluent Bit's biggest advantages is adding Kubernetes context.
+
+Without metadata:
+{
+ "message":"Login Successful"
+}
+
+With metadata:
+{
+ "namespace":"default",
+ "pod":"javawebapp-7d7fc",
+ "container":"java",
+ "node":"minikube",
+ "message":"Login Successful"
+}
+
+Now you can answer questions like:
+
+    Which pod generated this error?
+    Which namespace?
+    Which node?
+    Which container?
+
+
+Where Logs Are Stored
+
+Your Java application does not write directly to Elasticsearch.
+
+Flow:
+
+Application
+↓
+stdout
+↓
+Container Runtime
+↓
+Node Files
+↓
+Fluent Bit
+↓
+Elasticsearch
+
+
+Log-lifecycle:
+Application generates log
+↓
+Fluent Bit detects new log
+↓
+Parses it
+↓
+Adds metadata
+↓
+Sends to Elasticsearch
+↓
+Elasticsearch indexes it
+↓
+Kibana displays it
