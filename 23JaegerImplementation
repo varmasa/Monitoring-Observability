@@ -1,0 +1,38 @@
+helm repo add jaegertracing https://jaegertracing.github.io/helm-charts
+helm repo update
+
+helm search repo jaeger
+
+kubectl create namespace tracing
+
+jaeger-values.yaml:
+
+provisionDataStore:
+  cassandra: false
+
+storage:
+  type: memory
+
+allInOne:
+  enabled: true
+
+agent:
+  enabled: false
+
+collector:
+  enabled: false
+
+query:
+  enabled: false
+
+
+
+Install it:
+  helm install jaeger jaegertracing/jaeger \
+-n tracing \
+-f jaeger-values.yaml
+
+kubectl get pods -n tracing
+kubectl get svc -n tracing
+
+kubectl port-forward svc/jaeger -n tracing 16686:16686 --address 0.0.0.0 
