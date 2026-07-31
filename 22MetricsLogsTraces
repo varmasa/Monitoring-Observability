@@ -1,0 +1,6 @@
+| Metrics      | Logs          | Traces                 |
+| ------------ | ------------- | ---------------------- |
+| CPU          | Error message | Request journey        |
+| Memory       | Stack trace   | End-to-end latency     |
+| Requests/sec | Login failed  | Which service was slow |
+| Alerting     | Debugging     | Performance analysis   |
