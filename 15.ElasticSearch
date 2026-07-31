@@ -1,0 +1,53 @@
+Elasticsearch is a distributed search and analytics database optimized for indexed documents.
+
+It is not a traditional relational database.
+Instead of rows and tables, it stores JSON documents.
+
+Instead of storing logs as plain text, it indexes them.
+
+What is an Index?
+In MySQL:
+
+Database
+↓
+Table
+↓
+Rows
+
+In ElasticSearch:
+
+Cluster
+↓
+Index
+↓
+Documents
+
+
+Example log:
+  INFO Login Successful
+
+Stored as a document:
+  {
+  "timestamp":"2026-07-31",
+  "level":"INFO",
+  "message":"Login Successful",
+  "namespace":"default",
+  "pod":"java-app"
+ }
+
+ Every log becomes a searchable document.
+
+
+
+ Why Elasticsearch?
+
+Suppose you have:
+  500 million logs
+
+Searching plain text files could be slow.
+
+Elasticsearch builds indexes so queries like:
+  ERROR or UserID=1001 or Last 10 minutes
+can return results quickly.
+
+
