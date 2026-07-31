@@ -1,0 +1,72 @@
+EFK vs Prometheus
+
+| Feature          | Prometheus                 | EFK                             |
+| ---------------- | -------------------------- | ------------------------------- |
+| Collects         | Metrics                    | Logs                            |
+| Example          | CPU, Memory, Request Count | INFO, WARN, ERROR, Exceptions   |
+| Storage          | Time-series database       | Elasticsearch                   |
+| Visualization    | Grafana                    | Kibana                          |
+| Alerts           | Yes (Alertmanager)         | Via log queries or integrations |
+| Typical Question | "Is CPU high?"             | "Why did the application fail?" |
+
+
+Example Incident:
+A user reports that login isn't working.
+
+Prometheus shows:
+
+CPU: Normal
+Memory: Normal
+Pods: Healthy
+
+Metrics alone don't reveal the cause.
+
+In Kibana, you search for ERROR and find:
+
+ORA-01017: invalid username/password
+
+The logs identify the root cause.
+
+
+End To End Architecture:
+                    Users
+                       │
+                       ▼
+                 Java Application
+                       │
+               stdout / stderr
+                       │
+                       ▼
+          Container Runtime (Node)
+                       │
+         /var/log/containers/*.log
+                       │
+                       ▼
+         Fluent Bit (DaemonSet)
+                       │
+      Parse + Kubernetes Metadata
+                       │
+                       ▼
+               Elasticsearch
+           (Indexes & Stores Logs)
+                       │
+                       ▼
+                  Kibana UI
+        Search • Filter • Dashboard
+
+
+Where this fits into your observability stack
+
+Given what you've already built:
+
+Prometheus → Collects metrics (CPU, memory, request counts, JVM metrics).
+Grafana → Visualizes those metrics.
+Alertmanager → Sends alerts based on metric rules.
+EFK → Centralizes and searches application and Kubernetes logs.
+Jaeger (optional next step) → Traces requests across services.
+
+Together, these provide the three main pillars of observability:
+
+Metrics – "What is happening?"
+Logs – "Why did it happen?"
+Traces – "Where did it happen across services?"
