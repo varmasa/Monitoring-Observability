@@ -1,0 +1,141 @@
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+kubectl create ns loki
+
+
+loki-values.yaml:
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  storage:
+    type: filesystem
+
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
+ingester:
+  replicas: 0
+
+querier:
+  replicas: 0
+
+queryFrontend:
+  replicas: 0
+
+queryScheduler:
+  replicas: 0
+
+distributor:
+  replicas: 0
+
+compactor:
+  replicas: 0
+
+indexGateway:
+  replicas: 0
+
+bloomCompactor:
+  replicas: 0
+
+bloomGateway:
+  replicas: 0
+
+helm install loki grafana/loki \
+  -n loki \
+  -f loki-values.yaml
+  
+kubectl get pods -n loki
+
+helm install promtail grafana/promtail \
+  --namespace monitoring \
+  --set config.clients[0].url=http://loki:3100/loki/api/v1/push
+
+kubectl get pods -n loki      //Promtail is deployed as a DaemonSet, so you'll have one pod per node.
+
+
+helm install grafana grafana/grafana \
+  --namespace monitoring
+
+kubectl get secret grafana -n monitoring \
+  -o jsonpath="{.data.admin-password}" | base64 -d  //to get pwd
+
+kubectl port-forward svc/grafana -n monitoring 3000:80 --address "0.0.0.0"
+
+
+
+Configure Grafana
+
+If you're already running Grafana:
+
+Connections → Data Sources → Add data source → Loki
+
+URL: http://loki:3100
+Save & test
+
+Open Grafana
+
+Explore
+
+↓
+
+Choose
+Loki
+
+Run
+{namespace="default"}
+You should see logs.
+
+
+Arch:
+
+                    User
+                    │
+                    ▼
+              Java Application
+                    │
+              Container stdout
+                    │
+                    ▼
+      Promtail DaemonSet
+                    │
+                    ▼
+                 Loki
+                    │
+                    ▼
+               Grafana
+
+
+| Feature          | EFK                                      | Loki                                   |
+| ---------------- | ---------------------------------------- | -------------------------------------- |
+| Storage          | Elasticsearch                            | Loki                                   |
+| Collector        | Filebeat                                 | Promtail                               |
+| Parser           | Logstash                                 | Promtail pipelines                     |
+| UI               | Kibana                                   | Grafana                                |
+| Resource usage   | Higher                                   | Lower                                  |
+| Setup complexity | More components                          | Simpler                                |
+| Best suited for  | Powerful search and complex log analysis | Kubernetes-native logging with Grafana |
