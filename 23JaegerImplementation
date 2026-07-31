@@ -36,3 +36,23 @@ kubectl get pods -n tracing
 kubectl get svc -n tracing
 
 kubectl port-forward svc/jaeger -n tracing 16686:16686 --address 0.0.0.0 
+
+After building new image to enable open-telemetry jar The  we have to update deployment also:
+
+These environment variables tell the OpenTelemetry Java Agent what to do. Without them, the agent is loaded into your application, but it doesn't know where to send traces or what to call your service.
+ env:
+
+        - name: OTEL_SERVICE_NAME                //This is the service name displayed in the Jaeger UI.
+          value: "java-app"
+
+        - name: OTEL_TRACES_EXPORTER             //Specifies the protocol used to export traces.
+          value: "otlp"
+
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT      //This is the destination where traces are sent.
+          value: "http://jaeger.tracing.svc.cluster.local:4318"
+
+        - name: OTEL_METRICS_EXPORTER            //The Java agent can also export metrics.
+          value: "none"
+
+        - name: OTEL_LOGS_EXPORTER               //The Java agent can export logs too.
+          value: "none"
