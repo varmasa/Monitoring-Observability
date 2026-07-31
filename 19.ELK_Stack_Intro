@@ -1,0 +1,242 @@
+helm uninstall fluent-bit -n logging
+
+What is Logstash?
+    Logstash is a server-side data processing pipeline.
+
+Its job is to:
+  Collect logs from different sources
+  Parse logs
+  Transform logs
+  Filter unwanted data
+  Enrich logs
+  Send logs to one or more destinations
+
+Unlike Fluent Bit, Logstash is not just a log forwarder.
+Think of it as an ETL (Extract, Transform, Load) engine for logs.
+
+
+Real-world example Your Java application generates this log:
+    192.168.1.20 - - [31/Jul/2026:14:20:05 +0000] "GET /login HTTP/1.1" 404 1024
+
+Elasticsearch stores it exactly like this if no processing occurs.
+Searching becomes difficult.
+
+Instead Logstash converts it into:
+    {
+  "client_ip":"192.168.1.20",
+  "method":"GET",
+  "url":"/login",
+  "status":404,
+  "bytes":1024,
+  "timestamp":"2026-07-31T14:20:05"
+   }
+
+Now Kibana can easily answer:
+
+Number of 404s
+Top URLs
+Top client IPs
+Response codes
+Requests per minute
+
+This is why Logstash exists.
+
+
+Logstash Architecture:
+                INPUT
+                  │
+                  ▼
+              FILTERS
+                  │
+                  ▼
+               OUTPUT
+
+Everything in Logstash revolves around these three blocks.
+
+1. INPUT: This tells Logstash where logs come from.
+
+Examples:
+
+Application
+      │
+access.log (File)
+      │
+Logstash
+
+Configuration:
+input {
+ file {
+   path => "/logs/access.log"
+ }
+}
+
+Beats: HTTP
+input {
+ tcp {
+   port => 5000
+ }
+}
+
+
+
+2. FILTER:
+
+This is where Logstash becomes powerful.
+Filters modify data before sending to Elasticsearch.
+Most commonly used filters:
+
+Grok Filter:
+    Extract fields from plain text.
+
+Example:
+Input
+GET /login 404
+
+After Grok
+
+method = GET
+url = /login
+status = 404
+
+
+Mutate Filter:
+
+Rename fields
+  mutate {
+     rename => { "host" => "hostname" }
+  }
+
+Remove fields
+  mutate {
+     remove_field => ["agent"]
+  }
+  
+Convert datatype
+  mutate {
+     convert => {
+      "status" => "integer"
+     }
+  }
+
+
+Date Filter:  Convert timestamps.
+
+date {
+ match => ["timestamp","dd/MMM/yyyy:HH:mm:ss Z"]
+}
+
+
+GeoIP: Suppose log contains 8.8.8.8
+
+GeoIP converts into
+
+Country
+City
+Latitude
+Longitude
+Now Kibana can draw maps.
+
+
+JSON Filter:
+
+Input:
+{"name":"Sai","age":23}
+
+Output:
+name = Sai
+age = 23
+
+
+Drop Filter: Ignore logs.
+
+Example: Ignore health checks.
+
+if "/health" in [message] {
+ drop {}
+}
+
+
+3. OUTPUT:
+
+Where should processed logs go?
+
+Most commonly
+Elasticsearch
+
+output {
+ elasticsearch {
+   hosts => ["https://elasticsearch:9200"]
+ }
+}
+
+Many outputs are supported:
+    Kafka
+    S3
+    Redis
+    File
+    Email
+    Many outputs are supported.
+
+
+Application Logs
+       │
+       ▼
+   Filebeat
+       │
+       ▼
+   Logstash
+       │
+       ▼
+ Elasticsearch
+       │
+       ▼
+    Kibana
+
+
+What each component does?
+  Filebeat:
+      Lightweight log shipper.
+      Reads log files from your server (e.g., /var/log/app.log).
+      Sends logs to Logstash (or directly to Elasticsearch).
+  
+  Logstash:
+      Receives logs from Filebeat.
+      Parses and transforms logs using filters like:
+                      grok
+                      date
+                      mutate
+                      json
+      Sends the processed logs to Elasticsearch.
+      
+  Elasticsearch:
+      Stores and indexes logs.
+  
+  Kibana:
+      Searches, visualizes, and analyzes logs.
+ 
+Why Filebeat?
+    Many beginners ask
+
+Why not
+
+Application
+
+↓
+
+Logstash
+
+Because Logstash is heavy.
+Filebeat is tiny.
+Filebeat collects logs efficiently.
+Logstash processes them.
+Production architecture is
+
+Application
+↓
+Filebeat
+↓
+Logstash
+↓
+Elasticsearch
+
+This is the Elastic-recommended design.
