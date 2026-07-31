@@ -1,0 +1,219 @@
+Loki + Promtail:(Optional)
+    Loki + Promtail is an alternative log stack, not an additional required component.
+
+| EFK           | Loki Stack            |
+| ------------- | --------------------- |
+| Filebeat      | Promtail              |
+| Logstash      | (Usually no Logstash) |
+| Elasticsearch | Loki                  |
+| Kibana        | Grafana               |
+
+
+When would Loki be useful?
+
+If you want to learn Grafana's native logging ecosystem or compare technologies, then yes, it's worth implementing as a separate exercise.
+
+Benefits of Loki include:
+
+Lower storage requirements than Elasticsearch for many log workloads.
+Tight integration with Grafana.
+Simpler architecture (often no Logstash needed).
+
+Why do we need Loki?
+
+Suppose your Kubernetes cluster has:
+
+Pod-1 (Java)
+Pod-2 (Python)
+Pod-3 (Nginx)
+Pod-4 (MongoDB)
+
+Each pod continuously writes logs.
+Without a logging system:
+
+kubectl logs pod1
+kubectl logs pod2
+kubectl logs pod3
+
+You have to check each pod separately.
+
+
+
+With Loki:
+All logs are collected into one place.
+
+Java App
+     │
+Python App
+     │
+Nginx
+     │
+MongoDB
+     │
+     ▼
+ Promtail
+     │
+     ▼
+   Loki
+     │
+     ▼
+ Grafana
+
+Now you can search logs from Grafana.
+
+
+
+What is Promtail?
+  Promtail is a log collector.
+
+Its job is simple:
+  Read logs from Kubernetes pods and send them to Loki.
+
+Exactly like Filebeat.
+
+Think of it as: Promtail = Filebeat
+
+
+
+What is Loki?
+
+Loki stores logs.
+Think of it as:
+Loki = Elasticsearch
+
+
+What is Grafana?
+
+Grafana displays the logs.
+Think of it as:
+Grafana = Kibana
+
+Why no Logstash?
+
+Logstash parses logs before storing them.
+Loki is designed differently.
+
+Promtail can already:
+Add labels
+Parse JSON
+Parse CRI/Docker logs
+Extract fields
+
+So Logstash is usually unnecessary.
+
+
+Complete Flow
+
+Suppose your Java application prints:
+
+INFO Login Successful
+
+Step 1
+
+Tomcat writes:
+
+stdout
+
+↓
+
+Step 2
+
+Promtail reads:
+
+/var/log/containers
+
+↓
+
+Step 3
+
+Promtail sends
+
+HTTP
+
+↓
+
+Loki
+
+↓
+
+Step 4
+
+Grafana queries Loki
+
+↓
+
+You see
+
+INFO Login Successful
+
+
+k8s Arch:
+              Java App
+                 │
+                 ▼
+      stdout / container logs
+                 │
+                 ▼
+      Promtail DaemonSet
+                 │
+                 ▼
+             Loki
+                 │
+                 ▼
+            Grafana UI
+
+Why DaemonSet?
+
+One Promtail pod runs on every node.
+
+Example
+
+Node-1
+
+Promtail
+
+↓
+
+Collect logs
+Node-2
+
+Promtail
+
+↓
+
+Collect logs
+
+Exactly like Filebeat.
+
+Loki stores labels
+
+Unlike Elasticsearch,
+
+Loki stores
+
+namespace=default
+
+pod=java-app
+
+container=java
+
+level=INFO
+
+These labels make searching efficient.
+
+
+Search examples
+
+Show logs from Java app
+
+{app="java-app"}
+
+Show only default namespace
+
+{namespace="default"}
+
+Show errors
+
+{app="java-app"} |= "ERROR"
+
+This query language is called LogQL.
