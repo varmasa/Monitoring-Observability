@@ -33,14 +33,34 @@ Configure Fluent Bit Output Edit the ConfigMap:
 
 kubectl edit configmap fluent-bit -n logging
 Update the output section:
-[OUTPUT]
-    Name            es
-    Match           *
-    Host            elasticsearch-master.logging.svc.cluster.local
-    Port            9200
-    Index           kubernetes
-    Logstash_Format On
-    Retry_Limit     False
+
+[FILTER]
+        Name kubernetes
+        Match kube.*
+        Merge_Log Off
+        Keep_Log Off
+        K8S-Logging.Parser On
+        K8S-Logging.Exclude On
+
+    [OUTPUT]
+        Name                es
+        Match               *
+        Host                elasticsearch-master.logging.svc.cluster.local
+        Port                9200
+
+        tls                 On
+        tls.verify          Off
+
+        HTTP_User           elastic
+        HTTP_Passwd         Zc2qnyKNBzdw2nNg
+
+        Logstash_Format     On
+        Logstash_Prefix     kubernetes
+
+        Suppress_Type_Name  On
+        Generate_ID         On
+        Write_Operation     create
+        Trace_Error         On
 
 kubectl rollout restart daemonset fluent-bit -n logging      //Restart fluentbit
 
@@ -80,3 +100,30 @@ kubectl port-forward -n logging svc/kibana-kibana 5601:5601 --address "0.0.0.0"
 kubectl port-forward -n logging svc/fluent-bit 2020:2020 --address "0.0.0.0"
 
 
+Application Pods
+       │
+       ▼
+Fluent Bit
+       │
+       ▼
+Elasticsearch
+       │
+       ▼
+Kibana
+
+
+In kibana:
+    Stack Management → Data Views 
+
+Create a new Data View:
+kubernetes-*
+
+Select the time field:
+@timestamp
+
+Save.
+
+Open:
+Discover
+Select the kubernetes-* data view.
+Change the time range (top-right) to Last 24 hours or Last 7 days, then click Refresh.
