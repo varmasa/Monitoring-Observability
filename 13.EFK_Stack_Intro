@@ -1,0 +1,123 @@
+What is EFK?
+
+  EFK stands for:
+
+    E → Elasticsearch
+    F → Fluent Bit (or Fluentd)
+    K → Kibana
+
+It is a centralized logging stack.
+Instead of SSH into every server or pod to read log files, all logs are collected in one place where you can search, filter, and visualize them.
+
+
+Why do we need EFK?
+    Imagine your Java application runs in Kubernetes.
+Pod-1
+Pod-2
+Pod-3
+Pod-4
+
+Each pod produces logs.
+
+Example:
+
+INFO User Login
+INFO Order Created
+ERROR Database Timeout
+WARN Cache Miss
+
+If Pod-2 crashes, Kubernetes creates a new pod.
+
+Pod-2 (Deleted)
+↓
+Pod-5 (New)
+
+The old pod's logs disappear unless you collected them elsewhere.
+This is why Kubernetes logging should be centralized.
+
+
+
+Without EFK:
+Suppose you have 50 pods.
+kubectl logs pod1
+kubectl logs pod2
+kubectl logs pod3
+kubectl logs pod4
+...
+
+Finding one error across dozens of pods is tedious.
+
+
+With EFK:
+All Pods
+    │
+    ▼
+Fluent Bit
+    │
+    ▼
+Elasticsearch
+    │
+    ▼
+Kibana
+
+Now you open Kibana and search:
+  ERROR or Exception or CustomerID=1023
+
+and see matching logs from every pod in one place.
+
+
+How Kubernetes Stores Logs?
+
+Your Java application writes to standard output:
+System.out.println("Application Started");
+or
+logger.info("User Login");
+
+Inside the container, these go to stdout/stderr.
+
+The container runtime writes them to log files on the node.
+
+For example:
+/var/log/containers/
+/var/log/pods/
+
+You generally don't read these directly; Kubernetes tooling and log collectors do.
+
+
+
+Problem Statement:
+Suppose you have:
+  Java App
+  Node.js App
+  Python App
+  NGINX
+  MySQL
+  MongoDB
+
+Each application generates logs independently.
+Without centralized logging, you have to inspect each workload separately.
+
+
+
+Solution:
+    Java App
+    Node App
+    Python App
+    NGINX
+
+      │
+
+      ▼
+  Fluent Bit (DaemonSet)
+
+      │
+
+      ▼
+  Elasticsearch (StatefulSet)
+
+      │
+
+      ▼
+  Kibana (Deployment/SVC)
+
+One dashboard for everything.  
