@@ -1,0 +1,82 @@
+kubectl create namespace logging
+
+helm repo add elastic https://helm.elastic.co
+helm repo add fluent https://fluent.github.io/helm-charts
+helm repo update
+
+helm install elasticsearch elastic/elasticsearch \
+-n logging \
+--set replicas=1 \
+--set minimumMasterNodes=1 \
+--set resources.requests.cpu=500m \
+--set resources.requests.memory=1Gi \
+--set resources.limits.memory=2Gi
+
+
+kubectl get pods -n logging
+
+
+helm install kibana elastic/kibana \
+-n logging \
+--set service.type=NodePort
+
+kubectl get svc -n logging
+
+
+helm install fluent-bit fluent/fluent-bit \
+-n logging
+
+kubectl get ds -n logging
+kubectl edit configmap fluent-bit -n logging
+
+Configure Fluent Bit Output Edit the ConfigMap:
+
+kubectl edit configmap fluent-bit -n logging
+Update the output section:
+[OUTPUT]
+    Name            es
+    Match           *
+    Host            elasticsearch-master.logging.svc.cluster.local
+    Port            9200
+    Index           kubernetes
+    Logstash_Format On
+    Retry_Limit     False
+
+kubectl rollout restart daemonset fluent-bit -n logging      //Restart fluentbit
+
+Generate logs from UI (or) 
+      while true
+      do
+      curl http://<NodeIP>:<NodePort>
+      sleep 2
+      done
+
+To check elasticSearch status:
+    kubectl exec -it elasticsearch-master-0 -n logging -- bash
+    curl -k https://localhost:9200
+
+o/p: That confirms Elasticsearch is healthy and speaking HTTPS.
+{
+  "error": {
+    "type": "security_exception",
+    ...
+  },
+  "status": 401
+}
+
+To get elasticsearch pwd:
+kubectl get secret elasticsearch-master-credentials \
+-n logging \
+-o jsonpath='{.data.password}' | base64 -d
+
+
+Inside elastic-search container: curl -k -u elastic:<pwd> https://localhost:9200
+
+
+Access 3:
+
+kubectl port-forward -n logging svc/elasticsearch-master 9200:9200 --address "0.0.0.0"
+kubectl port-forward -n logging svc/kibana-kibana 5601:5601 --address "0.0.0.0"
+kubectl port-forward -n logging svc/fluent-bit 2020:2020 --address "0.0.0.0"
+
+
